@@ -23,7 +23,6 @@ resource "azurerm_linux_virtual_machine" "vm" {
   }
 }
 
-output "ssh_connection_command" {
-  value       = "ssh ${var.vm_admin_username}@${azurerm_public_ip.pubip.ip_address}"
-  description = "Connect"
+output "ansible_inventory" {
+  value       = "[prod]\nminecraft ansible_host=${azurerm_public_ip.pubip.ip_address} ansible_port=22 ansible_ssh_user=${var.vm_admin_username} ansible_ssh_pass=${var.vm_admin_password}"
 }
