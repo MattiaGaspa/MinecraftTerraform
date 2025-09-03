@@ -1,11 +1,17 @@
+---
 - hosts: all
+  become: true
+  vars:
+    minecraft_version: "1.21.8"
+    minecraft_url: "https://piston-data.mojang.com/v1/objects/6bce4ef400e4efaa63a13d5e6f6b500be969ef81/server.jar"
+    java_memory: "4096M"
   tasks:
     - name: Update apt cache and upgrade packages
       apt:
         update_cache: true
-        upgrade: true
+        upgrade: safe
 
-    - name: Install dependencies
+    - name: Install dependencies    
       apt:
         name:
         - wget
@@ -13,3 +19,91 @@
         - unzip
         - openjdk-21-jdk
         state: latest
+        update_cache: true
+
+    - name: Create Minecraft directory
+      file:
+        path: /opt/minecraft
+        state: directory
+        mode: '0755'
+
+    - name: Download Minecraft server
+      get_url: 
+        url: "{{ minecraft_url }}"
+        dest: /opt/minecraft/minecraft_server.{{ minecraft_version }}.jar
+        register: minecraft_download
+
+    - name: Accept the eula
+      copy:
+        content: "eula=true"
+        dest: /opt/minecraft/eula.txt
+
+    - name: Create systemd service file
+      copy:
+        content: |
+          [Unit]
+          Description=Minecraft Server
+          After=network.target
+
+          [Service]
+          Type=forking
+          WorkingDirectory=/opt/minecraft
+          ExecStart=/usr/bin/screen -dmS minecraft /usr/bin/java -Xmx{{ java_memory }} -Xms{{ java_memory }} -jar minecraft_server.{{ minecraft_version }}.jar nogui
+          ExecStop=/usr/bin/screen -p 0 -S minecraft -X eval 'stuff "stop"\\015'
+          RemainAfterExit=yes
+          Restart=on-failure
+          RestartSec=15
+
+          [Install]
+          WantedBy=multi-user.target
+        dest: /etc/systemd/system/minecraft-server.service
+      notify: reload systemd
+        
+
+    - name: Enable minecraft-server service
+      systemd:
+        name: minecraft-server
+        enabled: true
+        daemon_reload: true
+
+    - name: Start the minecraft server service
+      service:
+        name: minecraft-server
+        state: started
+      register: service_start
+
+    - name: Wait for server.properties to be generated
+      wait_for:
+        path: "/opt/minecraft/server.properties"
+        timeout: 60
+      when: minecraft_download.changed or service_start.changed
+
+    - name: Stop server before configuration
+      systemd:
+        name: minecraft-server
+        state: stopped
+      when: minecraft_download.changed or service_start.changed
+
+    - name: Set online-mode to false in server.properties
+      lineinfile:
+        path: "/opt/minecraft/server.properties"
+        regexp: '^online-mode=.*'
+        line: 'online-mode=false'
+        backup: yes
+      notify: restart minecraft
+
+    - name: Start and enable minecraft server
+      systemd:
+        name: minecraft-server
+        state: started
+        enabled: true
+        
+  handlers:
+    - name: reload systemd
+      systemd:
+        daemon_reload: true
+
+    - name: restart minecraft
+      systemd:
+        name: minecraft-server
+        state: restarted
