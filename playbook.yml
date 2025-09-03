@@ -5,6 +5,7 @@
     minecraft_version: "1.21.8"
     minecraft_url: "https://piston-data.mojang.com/v1/objects/6bce4ef400e4efaa63a13d5e6f6b500be969ef81/server.jar"
     java_memory: "4096M"
+    java_version: "21"
   tasks:
     - name: Update apt cache and upgrade packages
       apt:
@@ -17,7 +18,7 @@
         - wget
         - screen
         - unzip
-        - openjdk-21-jdk
+        - "openjdk-{{ java_version }}-jdk"
         state: latest
         update_cache: true
 
@@ -31,7 +32,7 @@
       get_url: 
         url: "{{ minecraft_url }}"
         dest: /opt/minecraft/minecraft_server.{{ minecraft_version }}.jar
-        register: minecraft_download
+      register: minecraft_download
 
     - name: Accept the eula
       copy:
@@ -97,7 +98,7 @@
         name: minecraft-server
         state: started
         enabled: true
-        
+
   handlers:
     - name: reload systemd
       systemd:

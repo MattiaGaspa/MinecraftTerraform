@@ -40,6 +40,11 @@ data "azurerm_public_ip" "pubip" {
   resource_group_name = azurerm_linux_virtual_machine.vm.resource_group_name
 }
 
+output "public_ip" {
+  value = azurerm_public_ip.pubip.ip_address
+}
+
+
 resource "azurerm_network_security_group" "netsec" {
   name                = "MinecraftServerNetworkSecurityGroup"
   location            = azurerm_resource_group.rg.location

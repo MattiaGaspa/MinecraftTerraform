@@ -46,7 +46,7 @@ chmod +x ./create.sh
 To avoid being billed when you don't use the server, run:
 
 ``` bash
-azi-cli script blah blah blah
+TODO
 ```
 
 ## Server restart
@@ -54,7 +54,7 @@ azi-cli script blah blah blah
 To start the server after deallocation, run:
 
 ``` bash
-az-cli script blah blah
+TODO
 ```
 
 ## Server deletion
@@ -66,3 +66,7 @@ terraform destroy
 ```
 
 This command requires confirmation, be aware that your world will be lost.
+
+## Changing minecraft version
+
+Open the `playbook.yml` file and set up the variables.
