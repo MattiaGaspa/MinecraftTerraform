@@ -2,6 +2,7 @@
 - hosts: all
   become: true
   vars:
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
     minecraft_version: "1.21.8"
     minecraft_url: "https://piston-data.mojang.com/v1/objects/6bce4ef400e4efaa63a13d5e6f6b500be969ef81/server.jar"
     java_memory: "4096M"
@@ -38,6 +39,11 @@
       copy:
         content: "eula=true"
         dest: /opt/minecraft/eula.txt
+    
+    - name: Create the server.properties
+      copy:
+        src: server.properties
+        dest: /opt/minecraft/server.properties
 
     - name: Create systemd service file
       copy:
@@ -58,8 +64,6 @@
           [Install]
           WantedBy=multi-user.target
         dest: /etc/systemd/system/minecraft-server.service
-      notify: reload systemd
-        
 
     - name: Enable minecraft-server service
       systemd:
@@ -70,41 +74,5 @@
     - name: Start the minecraft server service
       service:
         name: minecraft-server
-        state: started
-      register: service_start
-
-    - name: Wait for server.properties to be generated
-      wait_for:
-        path: "/opt/minecraft/server.properties"
-        timeout: 60
-      when: minecraft_download.changed or service_start.changed
-
-    - name: Stop server before configuration
-      systemd:
-        name: minecraft-server
-        state: stopped
-      when: minecraft_download.changed or service_start.changed
-
-    - name: Set online-mode to false in server.properties
-      lineinfile:
-        path: "/opt/minecraft/server.properties"
-        regexp: '^online-mode=.*'
-        line: 'online-mode=false'
-        backup: yes
-      notify: restart minecraft
-
-    - name: Start and enable minecraft server
-      systemd:
-        name: minecraft-server
-        state: started
-        enabled: true
-
-  handlers:
-    - name: reload systemd
-      systemd:
-        daemon_reload: true
-
-    - name: restart minecraft
-      systemd:
-        name: minecraft-server
         state: restarted
+      register: service_start

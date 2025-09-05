@@ -1,6 +1,6 @@
-variable "rg_name" {
-  description = "Name of the Resource Group"
-  default     = "MinecraftServer"
+variable "vm_location" {
+  description = "Location of the virtual machine"
+  default = "westeurope"
 }
 
 variable "vm_size" {
