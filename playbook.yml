@@ -8,11 +8,6 @@
     java_memory: "4096M"
     java_version: "21"
   tasks:
-    - name: Update apt cache and upgrade packages
-      apt:
-        update_cache: true
-        upgrade: safe
-
     - name: Install dependencies    
       apt:
         name:

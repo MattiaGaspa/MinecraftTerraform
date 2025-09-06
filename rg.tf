@@ -1,4 +1,4 @@
 resource "azurerm_resource_group" "rg" {
-  name     = "MinecraftServer"
+  name     = var.resource_group_name
   location = var.vm_location
 }
